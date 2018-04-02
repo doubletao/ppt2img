@@ -20,7 +20,7 @@ namespace ESBasic.Office
     public class OfficeScanner
     {
         #region Convert
-        public int Convert(string filePath, string strOutputPath, string strPrefix, int nBeginPage, int nEndPage)
+        public int Convert(string filePath, string strOutputPath, string strPrefix, uint nColor, int nBeginPage, int nEndPage)
         {
             if (!File.Exists(filePath))
             {
@@ -32,7 +32,7 @@ namespace ESBasic.Office
 
             if (extendName == "ppt" || extendName == "pptx")
             {
-                return Scan4PowerPoint(filePath, true, strOutputPath, strPrefix, nBeginPage, nEndPage);
+                return Scan4PowerPoint(filePath, true, strOutputPath, strPrefix, nColor, nBeginPage, nEndPage);
             }
             return 0;
         }
@@ -55,8 +55,31 @@ namespace ESBasic.Office
             return 0;
         }
 
+        private void BkErase(ref Bitmap bm, Color cl)
+        {
+            if (bm != null)
+            {
+                int width = bm.Width;
+                int height = bm.Height;
+                int length = height * 4 * width;
+                byte[] RGB = new byte[length];
+                BitmapData data = bm.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                System.IntPtr Scan0 = data.Scan0;
+                System.Runtime.InteropServices.Marshal.Copy(Scan0, RGB, 0, length);
+                for (int i = 0; i < RGB.Length; i = i + 4)
+                {
+                    if (Color.FromArgb(RGB[i], RGB[i + 1], RGB[i + 2], RGB[i + 3]) == cl)
+                    {
+                        RGB[i + 3] = 0;
+                    }
+                }
+                System.Runtime.InteropServices.Marshal.Copy(RGB, 0, Scan0, length);
+                bm.UnlockBits(data);
+            }
+        }
+
         #region Scan4PowerPoint
-        private int Scan4PowerPoint(string filePath, bool bOutputPng, string strOutputPath = "", string strPrefix = "", int nBeginPage = 0, int nEndPage = -1)
+        private int Scan4PowerPoint(string filePath, bool bOutputPng, string strOutputPath = "", string strPrefix = "", uint nColor = 0, int nBeginPage = 0, int nEndPage = -1)
         {
             MSPowerPoint.ApplicationClass pptApplicationClass = new MSPowerPoint.ApplicationClass();
 
@@ -81,6 +104,9 @@ namespace ESBasic.Office
                             object obj = data.GetData(DataFormats.MetafilePict);
                             Metafile metafile = MetafileHelper.GetEnhMetafileOnClipboard(IntPtr.Zero);
                             Bitmap bm = new Bitmap(metafile);
+
+                            BkErase(ref bm, Color.FromArgb((int)nColor));
+
                             string strOutPutIndex = index.ToString();
                             bm.Save(strOutputPath + "\\" + strPrefix + strOutPutIndex + ".png", ImageFormat.Png);
                             Clipboard.Clear();
@@ -96,7 +122,7 @@ namespace ESBasic.Office
             }
             catch (Exception ex)
             {
-                throw ex;
+                return 0;
             }
             finally
             {
@@ -313,6 +339,13 @@ class TaskTimerRecorder
         TimeSpan span = watch.Elapsed;
         Console.WriteLine("任务完成用时：" + span.TotalMilliseconds.ToString());
     }
+    public void Stop()
+    {
+        watch.Stop();
+
+        TimeSpan span = watch.Elapsed;
+        Console.WriteLine("任务完成用时：" + span.TotalMilliseconds.ToString());
+    }
 }
 
 namespace PPT2Img
@@ -334,6 +367,8 @@ namespace PPT2Img
             string strOutputFilePath = "图片输出路径";
             //拿到输出图片的名词前缀（后缀就是从0计数的页码）
             string strPrefix = "输出图片前缀";
+            //需要抠掉的颜色
+            uint nColor = 0xffffffff;
             //需要输出的起始页码
             int nBeginPage = 0;
             //需要输出的结束页码(-1为全部输出)
@@ -375,35 +410,66 @@ namespace PPT2Img
                             strPrefix = args[3];
                             if (args.Length > 4)
                             {
-                                string strBeginPage = args[4];
-                                nBeginPage = int.Parse(strBeginPage);
+                                string strColor = args[4];
+                                nColor = uint.Parse(strColor, System.Globalization.NumberStyles.HexNumber);
                                 if (args.Length > 5)
                                 {
-                                    string strEndPage = args[5];
-                                    nEndPage = int.Parse(strEndPage);
-                                    Console.WriteLine("工作模式是:" + strActionMode);
-                                    Console.WriteLine("PPT路径是:" + strPPTFileName);
-                                    Console.WriteLine("图片输出路径是:" + strOutputFilePath);
-                                    Console.WriteLine("图片输出前缀是:" + strPrefix);
-                                    Console.WriteLine("输出起始页码是:" + nBeginPage.ToString());
-                                    Console.WriteLine("输出结束页码是:" + nEndPage.ToString());
-                                    Console.WriteLine("开始执行");
+                                    string strBeginPage = args[5];
+                                    nBeginPage = int.Parse(strBeginPage);
+                                    if (args.Length > 6)
+                                    {
+                                        string strEndPage = args[6];
+                                        nEndPage = int.Parse(strEndPage);
+                                        Console.WriteLine("工作模式是:" + strActionMode);
+                                        Console.WriteLine("PPT路径是:" + strPPTFileName);
+                                        Console.WriteLine("图片输出路径是:" + strOutputFilePath);
+                                        Console.WriteLine("图片输出前缀是:" + strPrefix);
+                                        Console.WriteLine("需要抠掉的颜色是:" + nColor.ToString());
+                                        Console.WriteLine("输出起始页码是:" + nBeginPage.ToString());
+                                        Console.WriteLine("输出结束页码是:" + nEndPage.ToString());
+                                        Console.WriteLine("开始执行");
 
-                                    ESBasic.Office.OfficeScanner scaner = new ESBasic.Office.OfficeScanner();
-                                    int nPage = scaner.Convert(strPPTFileName, strOutputFilePath, strPrefix, nBeginPage, nEndPage);
-                                    FileStream fs = File.Create(strOutputFilePath + "pagecount.txt");
-                                    StreamWriter sw = new StreamWriter(fs);
-                                    sw.WriteLine(nPage.ToString());
-                                    sw.Close();
-                                    fs.Close();
+                                        ESBasic.Office.OfficeScanner scaner = new ESBasic.Office.OfficeScanner();
+                                        int nPage = scaner.Convert(strPPTFileName, strOutputFilePath, strPrefix, nColor, nBeginPage, nEndPage);
+                                        FileStream fs = File.Create(strOutputFilePath + "pagecount.txt");
+                                        StreamWriter sw = new StreamWriter(fs);
+                                        sw.WriteLine(nPage.ToString());
+                                        sw.Close();
+                                        fs.Close();
 
-                                    Console.WriteLine("执行结束");
-                                    return;
+                                        Console.WriteLine("执行结束");
+                                        return;
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+            else
+            {
+                //无参数模式，给一些参数，调试使用
+                strActionMode = "convert";
+                strPPTFileName = "D:\\PPT2Img\\PPT2Img\\test.ppt";
+                strOutputFilePath = "E:\\output\\";
+                strPrefix = "ppt";
+                nColor = 0xffffffff;
+
+                nColor = uint.Parse("ffffffff", System.Globalization.NumberStyles.HexNumber);
+
+                nBeginPage = 0;
+                nEndPage = -1;
+                ESBasic.Office.OfficeScanner scaner = new ESBasic.Office.OfficeScanner();
+                int nPage = scaner.Convert(strPPTFileName, strOutputFilePath, strPrefix, nColor, nBeginPage, nEndPage);
+                FileStream fs = File.Create(strOutputFilePath + "pagecount.txt");
+                StreamWriter sw = new StreamWriter(fs);
+                sw.WriteLine(nPage.ToString());
+                sw.Close();
+                fs.Close();
+
+                taskTimerRecorder.Stop();
+                Console.ReadLine();
+                
             }
         }
     }
