@@ -122,8 +122,8 @@ namespace ESBasic.Office
                             if (metafile != null)
                             {
                                 Bitmap bm = new Bitmap(metafile);
-                                bm = KiResizeImage(bm, nWidth, nHeight);
                                 BkErase(ref bm, Color.FromArgb((int)nColor));
+                                bm = KiResizeImage(bm, nWidth, nHeight);
                                 string strOutPutIndex = index.ToString();
                                 bm.Save(strOutputPath + "\\" + strPrefix + strOutPutIndex + ".png", ImageFormat.Png);
                                 Clipboard.Clear();
@@ -531,7 +531,7 @@ namespace PPT2Img
 #if false
                 //无参数模式，给一些参数，调试使用
                 strActionMode = "convert";
-                strPPTFileName = "C:\\Users\\dujiangtao\\Desktop\\测试.pptx";
+                strPPTFileName = "C:\\Users\\dujiangtao\\Desktop\\测试2.pptx";
                 strOutputFilePath = "E:\\output\\";
                 strPrefix = "ppt";
                 nColor = 0x000000ff;
