@@ -346,7 +346,6 @@ namespace ESBasic.Office
 
         public static bool SaveMetafile(Metafile mf, string filename)
         {
-            bool bResult = false;
             IntPtr hEMF, hEMF2;
             hEMF = mf.GetHenhmetafile(); // invalidates mf
             if (!hEMF.Equals(new IntPtr(0)))
