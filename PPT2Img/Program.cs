@@ -61,38 +61,39 @@ namespace ESBasic.Office
 
         private void BkErase(ref Bitmap bm, Color cl)
         {
-            if (bm != null)
-            {
-                int width = bm.Width;
-                int height = bm.Height;
-                int length = height * 4 * width;
-                byte[] RGB = new byte[length];
-                BitmapData data = bm.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-                System.IntPtr Scan0 = data.Scan0;
-                System.Runtime.InteropServices.Marshal.Copy(Scan0, RGB, 0, length);
-                for (int i = 0; i < RGB.Length; i = i + 4)
-                {
-                    if (i + 3 < RGB.Length)
-                    {
-                        if (Color.FromArgb(RGB[i], RGB[i + 1], RGB[i + 2], RGB[i + 3]) == cl)
-                        {
-                            RGB[i + 3] = 0;
-                        }
-                        else
-                        {
-                            //if (RGB[i + 3] != 255)
-                            //{
-                            //    RGB[i + 3] = 128;
-                            //}
-                        }
-                    }
-                }
-                System.Runtime.InteropServices.Marshal.Copy(RGB, 0, Scan0, length);
-                bm.UnlockBits(data);
-            }
+            return;
+            //if (bm != null)
+            //{
+            //    int width = bm.Width;
+            //    int height = bm.Height;
+            //    int length = height * 4 * width;
+            //    byte[] RGB = new byte[length];
+            //    BitmapData data = bm.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            //    System.IntPtr Scan0 = data.Scan0;
+            //    System.Runtime.InteropServices.Marshal.Copy(Scan0, RGB, 0, length);
+            //    for (int i = 0; i < RGB.Length; i = i + 4)
+            //    {
+            //        if (i + 3 < RGB.Length)
+            //        {
+            //            if (Color.FromArgb(RGB[i], RGB[i + 1], RGB[i + 2], RGB[i + 3]) == cl)
+            //            {
+            //                RGB[i + 3] = 0;
+            //            }
+            //            else
+            //            {
+            //                //if (RGB[i + 3] != 255)
+            //                //{
+            //                //    RGB[i + 3] = 128;
+            //                //}
+            //            }
+            //        }
+            //    }
+            //    System.Runtime.InteropServices.Marshal.Copy(RGB, 0, Scan0, length);
+            //    bm.UnlockBits(data);
+            //}
         }
 
-        #region Scan4PowerPoint
+#region Scan4PowerPoint
         private int Scan4PowerPoint(string filePath, bool bOutputPng, string strOutputPath = "", 
             string strPrefix = "", uint nColor = 0, int nBeginPage = 0, int nEndPage = -1,
             int nWidth = 1920, int nHeight = 1080)
@@ -149,7 +150,7 @@ namespace ESBasic.Office
                 System.Runtime.InteropServices.Marshal.ReleaseComObject(pptApplicationClass);
             }
         }
-        #endregion
+#endregion
 
         public static Bitmap KiResizeImage(Bitmap bmp, int newW, int newH)
         {
@@ -171,7 +172,7 @@ namespace ESBasic.Office
             }
         }
 
-        #region Scan4Word
+#region Scan4Word
         private Bitmap[] Scan4Word(string filePath)
         {
             //复制目标文件，后续将操作副本
@@ -246,11 +247,11 @@ namespace ESBasic.Office
                 File.Delete(tmpFilePath); //删除临时文件
             }
         }
-        #endregion       
-        #endregion
+#endregion
+#endregion
     }
 
-    #region MetafileHelper
+#region MetafileHelper
     /// <summary>
     /// MetafileHelper 用于从剪切板获取Metafile数据。
     /// </summary>
@@ -365,7 +366,7 @@ namespace ESBasic.Office
             return false;
         }
     }
-    #endregion
+#endregion
 }
 
 class TaskTimerRecorder
